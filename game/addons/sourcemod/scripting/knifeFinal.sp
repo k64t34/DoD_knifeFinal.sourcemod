@@ -2,9 +2,12 @@
 #define PLUGIN_VERSION "1.2"
 #define PLUGIN_NAME "Knife final"
 #define GAME_DOD
+//#define SND_GONG "ambient\\bell.wav"
+#define SND_GONG "k64t\\knifefinal\\knifefinal.mp3" 
+#define MSG1 "Melee"
 #include "k64t"
 //#include "dodhooks"
-//#define SND_hour	"k64t\\knifeFinal\\.mp3"
+
 enum Slots
 {
 	Slot_Primary,
@@ -18,6 +21,7 @@ int g_iDesiredPlayerClass;
 int g_hPlayerRespawn;
 int g_iWeaponParent;
 Handle g_hGameConfig;
+char sndGong[]={SND_GONG};
 public Plugin myinfo =
 {
     name = PLUGIN_NAME,
@@ -32,13 +36,12 @@ public void OnPluginStart(){
 #if defined DEBUG
 DebugPrint("OnPluginStart");
 #endif 
-//LoadTranslations("knifeFinal.phrases");
-RegServerCmd("knifeFinal",knifeFinal);	
-
-//char buffer[MAX_FILENAME_LENGHT];
-//Format(buffer, MAX_FILENAME_LENGHT, "download\\sound\\%s",SND_hour);	
-//AddFileToDownloadsTable(buffer);
-//PrecacheSound(SND_hour,true);
+LoadTranslations("knifeFinal.phrases");
+RegServerCmd("knifeFinal",knifeFinal);
+char buffer[MAX_FILENAME_LENGHT];
+Format(buffer, MAX_FILENAME_LENGHT, /*"download\\*/"sound\\%s",SND_GONG);	
+AddFileToDownloadsTable(buffer);
+//PrecacheSound(sndGong,true);
 //AutoExecConfig(true, "knifeFinal");
 
 /*StartPrepSDKCall(SDKCall_Player);
@@ -65,17 +68,20 @@ public void OnMapEnd() {
 	DebugPrint("OnMapEnd");
 	#endif 
 	//g_knifeFinal=0;
-	UnhookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
-	UnhookEvent("player_death",	Event_PlayerDeath,EventHookMode_Post);
+	UnhookEvent("player_death",	Event_PlayerDeath, EventHookMode_Post);
+	UnhookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);	
 }
 public  Action knifeFinal (int args){
 	#if defined DEBUG
 	DebugPrint("knifeFinal");
 	#endif 
 	LogToGame("Knife final start");
+	PrecacheSound(SND_GONG,true);
+	EmitSoundToAll(SND_GONG);	
+	PrintHintTextToAll("%t",MSG1);
 	//g_knifeFinal=1;
 	HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
-	HookEvent("player_death",		Event_PlayerDeath,EventHookMode_Post);
+	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Post);
 	//TODO: Убрать всё оружие с карты
 	//TODO: На время победы в раунде прекратить мнговенное рождение
 	//HookEvent("dod_round_win", PlayerRoundWinEvent);
@@ -99,14 +105,14 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 	#if defined DEBUG
 	DebugPrint("Event_PlayerDeath");
 	#endif 
-	int client=GetClientOfUserId(event.GetInt("userid"));	
+	//int client=GetClientOfUserId(event.GetInt("userid"));	
 	/*if (GetEntData(client, g_iDesiredPlayerClass) != -1)
 	{
 		SDKCall(g_hPlayerRespawn, client);
 	}*/
-	CreateTimer(0.1,PlayerSpawn,client,TIMER_FLAG_NO_MAPCHANGE);
+	//CreateTimer(0.1,Timer_PlayerSpawn,client,TIMER_FLAG_NO_MAPCHANGE);
 }
-public  Action PlayerSpawn(Handle timer,int client){
+public  Action Timer_PlayerSpawn(Handle timer,int client){
 	#if defined DEBUG
 	DebugPrint("PlayerSpawn");
 	#endif 
@@ -148,7 +154,7 @@ void RemoveWeaponFromPlayer(int client){
 	//ChangeEdictState(client, FindDataMapOffs(client, "m_hActiveWeapon"));
 }
 void RemoveWeaponBySlot(int client, Slots slot){
-	int weapon = GetPlayerWeaponSlot(client, slot);	
+	int weapon = GetPlayerWeaponSlot( client, slot);	
 	if (IsValidEdict(weapon))
 	{		
 		RemovePlayerItem(client, weapon);

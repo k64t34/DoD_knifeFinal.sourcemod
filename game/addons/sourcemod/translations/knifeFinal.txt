@@ -1,8 +1,0 @@
-"Phrases"
-{
-    "time"
-    {
-        "en"            "time"
-		"ru"            "время"
-    }
-}
