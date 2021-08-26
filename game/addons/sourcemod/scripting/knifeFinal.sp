@@ -1,9 +1,9 @@
-#define DEBUG 1
-#define PLUGIN_VERSION "1.1"
+#define noDEBUG 1
+#define PLUGIN_VERSION "1.2"
 #define PLUGIN_NAME "Knife final"
 #define GAME_DOD
 #include "k64t"
-#include "dodhooks"
+//#include "dodhooks"
 //#define SND_hour	"k64t\\knifeFinal\\.mp3"
 enum Slots
 {
@@ -16,6 +16,7 @@ enum Slots
 //int g_knifeFinal=0; //0 - normal, 1- knife only
 int g_iDesiredPlayerClass;
 int g_hPlayerRespawn;
+int g_iWeaponParent;
 Handle g_hGameConfig;
 public Plugin myinfo =
 {
@@ -31,10 +32,9 @@ public void OnPluginStart(){
 #if defined DEBUG
 DebugPrint("OnPluginStart");
 #endif 
-LoadTranslations("knifeFinal.phrases");
-#if defined DEBUG	
+//LoadTranslations("knifeFinal.phrases");
 RegServerCmd("knifeFinal",knifeFinal);	
-#endif 
+
 //char buffer[MAX_FILENAME_LENGHT];
 //Format(buffer, MAX_FILENAME_LENGHT, "download\\sound\\%s",SND_hour);	
 //AddFileToDownloadsTable(buffer);
@@ -51,6 +51,7 @@ if ((g_iDesiredPlayerClass = FindSendPropInfo("CDODPlayer", "m_iDesiredPlayerCla
 	{
 	SetFailState("Fatal Error: Unable to find offset \"m_iDesiredPlayerClass\"!");
 	}	*/
+g_iWeaponParent = FindSendPropInfo("CBaseCombatWeapon", "m_hOwnerEntity");if (g_iWeaponParent == -1)SetFailState("Error - Unable to get offset for CBaseCombatWeapon::m_hOwnerEntity");
 }
 #if defined DEBUG
 //***********************************************
@@ -71,6 +72,7 @@ public  Action knifeFinal (int args){
 	#if defined DEBUG
 	DebugPrint("knifeFinal");
 	#endif 
+	LogToGame("Knife final start");
 	//g_knifeFinal=1;
 	HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
 	HookEvent("player_death",		Event_PlayerDeath,EventHookMode_Post);
@@ -80,23 +82,24 @@ public  Action knifeFinal (int args){
 	//public PlayerRoundWinEvent(Handle:event, const String:name[], bool:dontBroadcast) 
 	//dod_round_active
 	//Note: When the round becomes active after the "frozen" time
-	for (int i=1;i!=MaxClients;i++)
+	RemoveAllWeapons();
+	for (int i=1;i<=MaxClients;i++)
 	{
-		int intBuff=GetClientTeam(i);
-		if (intBuff==DOD_TEAM_ALLIES || intBuff==DOD_TEAM_AXIS)			
-		if(IsPlayerAlive(i)) 
-		RemoveWeaponFromPlayer(i);
-		
-	}
-	
+		if (IsClientInGame(i))
+		if (IsPlayerAlive(i))
+		{
+			int intBuff=GetClientTeam(i);
+			if (intBuff==DOD_TEAM_ALLIES || intBuff==DOD_TEAM_AXIS)			
+			if(IsPlayerAlive(i)) 
+			RemoveWeaponFromPlayer(i);		
+		}
+	}		
 }
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
 	#if defined DEBUG
 	DebugPrint("Event_PlayerDeath");
 	#endif 
-	int client=GetClientOfUserId(event.GetInt("userid"));
-    
-	
+	int client=GetClientOfUserId(event.GetInt("userid"));	
 	/*if (GetEntData(client, g_iDesiredPlayerClass) != -1)
 	{
 		SDKCall(g_hPlayerRespawn, client);
@@ -107,17 +110,17 @@ public  Action PlayerSpawn(Handle timer,int client){
 	#if defined DEBUG
 	DebugPrint("PlayerSpawn");
 	#endif 
-	Event newevent = CreateEvent("player_spawn");
-    if (newevent == null)
-    {
-		#if defined DEBUG
-		DebugPrint("PlayerSpawn fail");
-		#endif 
-        return Plugin_Stop;		
-    } 
-    newevent.SetInt("userid",GetClientUserId(client) );    
-    newevent.Fire();	
-	DispatchSpawn(client);
+	//Event newevent = CreateEvent("player_spawn");
+    //if (newevent == null)
+    //{
+	//	#if defined DEBUG
+	//	DebugPrint("PlayerSpawn fail");
+	//	#endif 
+    //    return Plugin_Stop;		
+    //} 
+    //newevent.SetInt("userid",GetClientUserId(client) );    
+    //newevent.Fire();	
+	//DispatchSpawn(client);
 	return Plugin_Stop;
 }
 public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast){
@@ -131,24 +134,18 @@ void RemoveWeaponFromPlayer(int client){
 	RemoveWeaponBySlot(client, Slot_Grenade);
 	RemoveWeaponBySlot(client, Slot_Primary);
 	RemoveWeaponBySlot(client, Slot_Secondary);
-	RemoveWeaponBySlot(client, Slot_Melee);
-	
-	
-	
+	RemoveWeaponBySlot(client, Slot_Melee);	
 	//TODO:Switch active weapon to Melee
 	//Client_SetActiveWeapon(client, GetPlayerWeaponSlot(client, 1)); 
-	//https://forums.alliedmods.net/showthread.php?t=225180
-	
+	//https://forums.alliedmods.net/showthread.php?t=225180	
 	//SDKHook_WeaponSwitch,
-	GivePlayerItem(client, "weapon_amerknife");	
-	//GivePlayerItem(client, "weapon_spade");	
-	
+	int team=GetClientTeam(client);
+	if (team==DOD_TEAM_ALLIES) GivePlayerItem(client, "weapon_amerknife");	
+	else if (team==DOD_TEAM_AXIS) GivePlayerItem(client, "weapon_spade");	
 	//Client_SetActiveWeapon(client, GetPlayerWeaponSlot(client, 1)); FROM SMLIB
 	//stock Client_SetActiveWeapon(client, weapon)
 	//SetEntPropEnt(client, Prop_Data, "m_hActiveWeapon", weapon);
 	//ChangeEdictState(client, FindDataMapOffs(client, "m_hActiveWeapon"));
-
-
 }
 void RemoveWeaponBySlot(int client, Slots slot){
 	int weapon = GetPlayerWeaponSlot(client, slot);	
@@ -158,6 +155,26 @@ void RemoveWeaponBySlot(int client, Slots slot){
 		AcceptEntityInput(weapon, "Kill");
 	}
 }
+void RemoveAllWeapons(){
+	#if defined DEBUG
+	DebugPrint("RemoveAllWeapons");
+	#endif
+	int maxent = GetMaxEntities();
+	char weapon[64];
+	for (int i=MaxClients;i<maxent;i++)
+		{
+		if ( IsValidEdict(i) && IsValidEntity(i) && GetEntDataEnt2(i, g_iWeaponParent) == -1 )
+			{
+			GetEdictClassname(i, weapon, sizeof(weapon));
+			if (    StrContains(weapon, "weapon_") != -1                // remove weapons
+					|| StrEqual(weapon, "hostage_entity", true)         // remove hostages
+					|| StrContains(weapon, "item_") != -1           )   // remove bombs
+				{	
+					RemoveEdict(i);
+				}
+		}
+	}
+}    
 #endinput
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 //weapon list
