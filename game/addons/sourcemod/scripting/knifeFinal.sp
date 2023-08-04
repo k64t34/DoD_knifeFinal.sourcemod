@@ -1,5 +1,5 @@
 #define noDEBUG 1
-#define PLUGIN_VERSION "1.2"
+#define PLUGIN_VERSION "1.3"
 #define PLUGIN_NAME "Knife final"
 #define GAME_DOD
 //#define SND_GONG "ambient\\bell.wav"
@@ -8,20 +8,26 @@
 #include "k64t"
 //#include "dodhooks"
 
-enum Slots
+/*enum Slots
 {
-	Slot_Primary,
-	Slot_Secondary,
-	Slot_Melee,
-	Slot_Grenade
+	 Slot_Primary=0,
+	 Slot_Secondary=1,
+	 Slot_Melee=2,
+	 Slot_Grenade=3
 };
+*/
+#define Slot_Primary 0
+#define Slot_Secondary 1
+#define Slot_Melee 2
+#define Slot_Grenade 3
+	 
 // Global Var
 //int g_knifeFinal=0; //0 - normal, 1- knife only
-int g_iDesiredPlayerClass;
-int g_hPlayerRespawn;
+//int g_iDesiredPlayerClass;
+//int g_hPlayerRespawn;
 int g_iWeaponParent;
-Handle g_hGameConfig;
-char sndGong[]={SND_GONG};
+//Handle g_hGameConfig;
+//char sndGong[]=SND_GONG;
 public Plugin myinfo =
 {
     name = PLUGIN_NAME,
@@ -63,15 +69,21 @@ public void OnMapStart(){
 DebugPrint("OnMapStart");
 }
 #endif 
+//***********************************************
 public void OnMapEnd() {
+//***********************************************	
 	#if defined DEBUG
 	DebugPrint("OnMapEnd");
 	#endif 
 	//g_knifeFinal=0;
+	#if defined DEBUG
 	UnhookEvent("player_death",	Event_PlayerDeath, EventHookMode_Post);
-	UnhookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);	
+	#endif
+	UnhookEvent("player_spawn", Event_PlayerSpawn);	
 }
-public  Action knifeFinal (int args){
+//***********************************************
+public Action knifeFinal (int args){
+//***********************************************	
 	#if defined DEBUG
 	DebugPrint("knifeFinal");
 	#endif 
@@ -81,7 +93,9 @@ public  Action knifeFinal (int args){
 	PrintHintTextToAll("%t",MSG1);
 	//g_knifeFinal=1;
 	HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
+	#if defined DEBUG
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Post);
+	#endif
 	//TODO: Убрать всё оружие с карты
 	//TODO: На время победы в раунде прекратить мнговенное рождение
 	//HookEvent("dod_round_win", PlayerRoundWinEvent);
@@ -100,11 +114,13 @@ public  Action knifeFinal (int args){
 			RemoveWeaponFromPlayer(i);		
 		}
 	}		
+return Plugin_Handled;
 }
+#if defined DEBUG
+//***********************************************
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
-	#if defined DEBUG
-	DebugPrint("Event_PlayerDeath");
-	#endif 
+//***********************************************		
+	DebugPrint("Event_PlayerDeath");	
 	//int client=GetClientOfUserId(event.GetInt("userid"));	
 	/*if (GetEntData(client, g_iDesiredPlayerClass) != -1)
 	{
@@ -112,10 +128,12 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 	}*/
 	//CreateTimer(0.1,Timer_PlayerSpawn,client,TIMER_FLAG_NO_MAPCHANGE);
 }
+#endif 
+#if defined DEBUG
+//***********************************************
 public  Action Timer_PlayerSpawn(Handle timer,int client){
-	#if defined DEBUG
-	DebugPrint("PlayerSpawn");
-	#endif 
+//***********************************************		
+	DebugPrint("PlayerSpawn");	
 	//Event newevent = CreateEvent("player_spawn");
     //if (newevent == null)
     //{
@@ -129,14 +147,20 @@ public  Action Timer_PlayerSpawn(Handle timer,int client){
 	//DispatchSpawn(client);
 	return Plugin_Stop;
 }
-public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast){
-	#if defined DEBUG
-	DebugPrint("Event_PlayerSpawn");
-	#endif 	
-	int client=GetClientOfUserId(event.GetInt("userid"));	
-	RemoveWeaponFromPlayer(client);
+#endif 
+//***********************************************
+public Action  Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast){
+//***********************************************	
+#if defined DEBUG
+DebugPrint("Event_PlayerSpawn");
+#endif 	
+int client=GetClientOfUserId(event.GetInt("userid"));	
+RemoveWeaponFromPlayer(client);
+return Plugin_Continue;	
 }
+//***********************************************
 void RemoveWeaponFromPlayer(int client){
+//***********************************************	
 	RemoveWeaponBySlot(client, Slot_Grenade);
 	RemoveWeaponBySlot(client, Slot_Primary);
 	RemoveWeaponBySlot(client, Slot_Secondary);
@@ -153,7 +177,9 @@ void RemoveWeaponFromPlayer(int client){
 	//SetEntPropEnt(client, Prop_Data, "m_hActiveWeapon", weapon);
 	//ChangeEdictState(client, FindDataMapOffs(client, "m_hActiveWeapon"));
 }
-void RemoveWeaponBySlot(int client, Slots slot){
+//***********************************************
+void RemoveWeaponBySlot(int client, int  slot){
+//***********************************************	
 	int weapon = GetPlayerWeaponSlot( client, slot);	
 	if (IsValidEdict(weapon))
 	{		
@@ -161,7 +187,9 @@ void RemoveWeaponBySlot(int client, Slots slot){
 		AcceptEntityInput(weapon, "Kill");
 	}
 }
+//***********************************************
 void RemoveAllWeapons(){
+//***********************************************	
 	#if defined DEBUG
 	DebugPrint("RemoveAllWeapons");
 	#endif
