@@ -23,6 +23,7 @@
 	 
 // Global Var
 //int g_knifeFinal=0; //0 - normal, 1- knife only
+bool g_knifeFinalStarted=false;
 //int g_iDesiredPlayerClass;
 //int g_hPlayerRespawn;
 int g_iWeaponParent;
@@ -76,10 +77,13 @@ public void OnMapEnd() {
 	DebugPrint("OnMapEnd");
 	#endif 
 	//g_knifeFinal=0;
-	#if defined DEBUG
-	UnhookEvent("player_death",	Event_PlayerDeath, EventHookMode_Post);
-	#endif
-	UnhookEvent("player_spawn", Event_PlayerSpawn);	
+	if (g_knifeFinalStarted)
+		{
+		#if defined DEBUG
+		UnhookEvent("player_death",	Event_PlayerDeath, EventHookMode_Post);
+		#endif
+		UnhookEvent("player_spawn", Event_PlayerSpawn);	
+		}
 }
 //***********************************************
 public Action knifeFinal (int args){
@@ -87,6 +91,7 @@ public Action knifeFinal (int args){
 	#if defined DEBUG
 	DebugPrint("knifeFinal");
 	#endif 
+	g_knifeFinalStarted=true;
 	LogToGame("Knife final start");
 	PrecacheSound(SND_GONG,true);
 	EmitSoundToAll(SND_GONG);	
