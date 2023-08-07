@@ -88,9 +88,12 @@ public void OnMapEnd() {
 //***********************************************
 public Action knifeFinal (int args){
 //***********************************************	
-	#if defined DEBUG
-	DebugPrint("knifeFinal");
-	#endif 
+#if defined DEBUG
+DebugPrint("knifeFinal");
+#endif 
+g_knifeFinalStarted=!g_knifeFinalStarted;
+if (g_knifeFinalStarted)	
+	{		
 	g_knifeFinalStarted=true;
 	LogToGame("Knife final start");
 	PrecacheSound(SND_GONG,true);
@@ -109,16 +112,21 @@ public Action knifeFinal (int args){
 	//Note: When the round becomes active after the "frozen" time
 	RemoveAllWeapons();
 	for (int i=1;i<=MaxClients;i++)
-	{
+		{
 		if (IsClientInGame(i))
 		if (IsPlayerAlive(i))
-		{
+			{
 			int intBuff=GetClientTeam(i);
 			if (intBuff==DOD_TEAM_ALLIES || intBuff==DOD_TEAM_AXIS)			
 			if(IsPlayerAlive(i)) 
 			RemoveWeaponFromPlayer(i);		
-		}
-	}		
+			}
+		}	
+	}	
+else
+	{
+	UnhookEvent("player_spawn", Event_PlayerSpawn,EventHookMode_Post);		
+	}	
 return Plugin_Handled;
 }
 #if defined DEBUG
@@ -219,16 +227,6 @@ void RemoveAllWeapons(){
 //weapon list
 //https://github.com/zadroot/GunMenu/blob/master/configs/weapons.ini
 //https://github.com/zadroot/GunMenu/blob/master/scripting/dod_gunmenu.sp
-
-
-
-
-bool:IsValidClient(client)
-{
-	return (1 <= client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client) && GetClientTeam(client) > TEAM_SPECTATOR) ? true : false;
-}
-
-
 
 //"weapon_smoke_us"  "US Smoke Grenade"
 //"weapon_smoke_ger" "Stick Smoke Grenade"
