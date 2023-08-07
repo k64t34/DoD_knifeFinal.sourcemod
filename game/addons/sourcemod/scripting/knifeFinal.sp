@@ -1,5 +1,5 @@
-#define noDEBUG 1
-#define PLUGIN_VERSION "1.3"
+#define noDEBUG 
+#define PLUGIN_VERSION "1.4"
 #define PLUGIN_NAME "Knife final"
 #define GAME_DOD
 //#define SND_GONG "ambient\\bell.wav"
@@ -72,26 +72,27 @@ DebugPrint("OnMapStart");
 #endif 
 //***********************************************
 public void OnMapEnd() {
-//***********************************************	
+//***********************************************		
 	#if defined DEBUG
-	DebugPrint("OnMapEnd");
+	DebugLog("OnMapEnd %d",g_knifeFinalStarted);	
 	#endif 
 	//g_knifeFinal=0;
 	if (g_knifeFinalStarted)
-		{
+		{		
 		#if defined DEBUG
 		UnhookEvent("player_death",	Event_PlayerDeath, EventHookMode_Post);
 		#endif
-		UnhookEvent("player_spawn", Event_PlayerSpawn);	
+		UnhookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);	
+		g_knifeFinalStarted=false;
 		}
 }
 //***********************************************
 public Action knifeFinal (int args){
 //***********************************************	
-#if defined DEBUG
-DebugPrint("knifeFinal");
-#endif 
 g_knifeFinalStarted=!g_knifeFinalStarted;
+#if defined DEBUG
+DebugLog("knifeFinal %d",g_knifeFinalStarted);
+#endif 
 if (g_knifeFinalStarted)	
 	{		
 	g_knifeFinalStarted=true;
@@ -126,6 +127,9 @@ if (g_knifeFinalStarted)
 else
 	{
 	UnhookEvent("player_spawn", Event_PlayerSpawn,EventHookMode_Post);		
+	#if defined DEBUG
+	UnhookEvent("player_death", Event_PlayerDeath, EventHookMode_Post);
+	#endif
 	}	
 return Plugin_Handled;
 }
